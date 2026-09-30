@@ -230,7 +230,7 @@ class BuildUiMixin:
                   style="Subtle.TLabel").pack(anchor="w", pady=(6, 0))
 
         font_sub = self._subsection(box, "Font")
-        ttk.Label(font_sub, text="Type to search, like in Word:").pack(anchor="w")
+        ttk.Label(font_sub, text="Type to search:").pack(anchor="w")
         self.font_combo = ttk.Combobox(font_sub, textvariable=self.font_choice, style="FontEntry.TCombobox")
         self.font_combo.pack(fill="x", pady=(2, 0))
 
@@ -358,8 +358,7 @@ class BuildUiMixin:
                   style="Subtle.TLabel", wraplength=300, justify="left").pack(anchor="w", pady=(6, 0))
 
         id_font_sub = self._subsection(box, "Font")
-        ttk.Label(id_font_sub, text="Type to search, like in Word - "
-                                     "independent of the Name's font:",
+        ttk.Label(id_font_sub, text="Type to search:",
                   wraplength=300, justify="left").pack(anchor="w")
         self.cert_id_font_combo = ttk.Combobox(id_font_sub, textvariable=self.cert_id_font_choice, style="FontEntry.TCombobox")
         self.cert_id_font_combo.pack(fill="x", pady=(2, 0))
