@@ -1,240 +1,357 @@
-# Certificate Bulk Generator
+# Meraki
 
-A standalone desktop app that works like Canva's "Bulk Create": upload a
-CSV or Excel file, pick the name column, upload a certificate template,
-drag the name into place, style it (font, Bold/Italic/Underline, color),
-and generate one file per row as PDF, PNG, or JPG.
+### Bulk Certificate Generator
 
-## 1. There is no bundled API key - each install needs its own
+Turn a spreadsheet of names and one certificate template into a full batch of personalized PDFs, PNGs, or JPGs.
 
-This app does **not** ship with a Google Fonts API key baked in. Every
-person who runs it - including on a machine you've never touched - starts
-with only the **Great Vibes** font available. The moment the splash screen
-finishes, if no key has been saved yet, a dialog explains this and offers
-to add one (with a link to get a free key from Google). "Save & Continue"
-stays disabled until something is typed into the key field, and clicking
-it doesn't just trust whatever was typed - the app makes a real request to
-Google's API with that key and waits to see whether Google actually
-accepts it, showing "Checking your key with Google..." while it does. Only
-a key Google genuinely accepts gets saved; a rejected key is never written
-to disk, the font list stays on Great Vibes only, and the dialog stays
-open with an explanation so they can fix it and try again. "Continue with
-Great Vibes only" skips this entirely and is always clickable - either
-way, the reminder dialog reappears on every future launch until a key that
-actually works has been saved. The same "Settings" button in the toolbar
-also lets someone add or change the key at any time, with the same live
-validation, without waiting for that dialog.
+![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![GUI](https://img.shields.io/badge/GUI-Tkinter-2E7D32?style=flat-square)
+![Pillow](https://img.shields.io/badge/imaging-Pillow-8E44AD?style=flat-square)
 
-**In short: yes - every time this app is handed to someone new, on a new
-computer, they'll need their own free Google Fonts API key if they want
-more than Great Vibes.** There's nothing to configure or paste in before
-bundling; this is fully self-serve for each person who runs the exe.
+Built for the **Office of Research, Innovation & Commercialization (ORIC)**, University of Karachi.
 
-## 2. Set up
+</div>
 
-```
+---
+
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Getting Started](#-getting-started)
+- [How to Use Meraki](#-how-to-use-meraki)
+- [Working with Rows](#-working-with-rows)
+- [Certificate IDs](#-certificate-ids)
+- [Fonts and Text Styling](#-fonts-and-text-styling)
+- [Themes](#-themes)
+- [How Positioning Works](#-how-positioning-works)
+- [Output Files](#-output-files)
+- [Settings and Data Storage](#-settings-and-data-storage)
+- [Building the Executable](#-building-the-executable)
+- [Project Structure](#-project-structure)
+- [Architecture Notes](#-architecture-notes)
+- [Troubleshooting](#-troubleshooting)
+- [Support](#-support)
+- [Credits](#-credits)
+
+---
+
+## 🎯 Overview
+
+Meraki is a Windows desktop app for producing certificates in bulk. It works in the same spirit as Canva's "Bulk Create": you load a list of people, load a certificate design, drag the name to where it belongs, and let the app produce one file per person.
+
+It started as a single Tkinter script and has since been rebuilt with a new interface, a modular codebase, and a much larger theming system. The workflow is the same as before, but almost everything around it is new: a proper upload screen, an Excel-style grid, row selection tools, unique Certificate IDs, a custom color picker, and drag-and-drop everywhere it makes sense.
+
+## ✨ Features
+
+**Loading your data**
+- Read `.csv`, `.xlsx`, and `.xlsm` files, one row per person.
+- A dedicated **Upload Source File** screen with recent files on one side and a drag-and-drop zone on the other.
+- Native drag-and-drop on the upload screen, the Certificate View tab, and the Source File View tab. Dropping a new file replaces the one currently loaded.
+- Recent files are remembered (up to 8 each) for both source files and certificate images.
+
+**Designing the certificate**
+- Drag the name directly on a live preview, or type exact pixel coordinates.
+- Add an optional, unique **Certificate ID** and position it the same way.
+- Pick the font, size, color, alignment, and Bold, Italic, or Underline styling.
+- Choose a casing rule: as in file, UPPERCASE, lowercase, Title Case, Sentence case, or tOGGLE cASE. Casing is applied only when rendering, so your source data is never modified.
+- Word-style font autocomplete with live filtering.
+- An advanced color picker with a standard color grid, a shaded palette, recent colors, and an HSV spectrum with hex and RGB entry.
+
+**Choosing who gets a certificate**
+- An Excel-like grid of your source file with green and red row highlighting.
+- Process all rows, a typed range, or rows picked directly in the grid.
+- Shift-click and Ctrl-click selection, plus lockable range chips so you can build up several separate ranges without one click undoing another.
+
+**Generating**
+- Export as PDF, PNG, or JPG.
+- Files are named after each person.
+- The progress bar appears only while a run is active.
+
+**Polish**
+- Twelve built-in themes, from soft light palettes to two dark ones.
+- Animated splash screen, a first-run API key prompt, and an in-app **How to Use** guide.
+- Exit confirmation, and a modal-dialog attention system (flash, shake, and sound) so a blocked main window never looks frozen.
+
+## 📸 Screenshots
+
+<!--
+Replace these placeholders with real screenshots and keep the file names,
+or update the paths below. A docs/screenshots folder works well.
+-->
+
+| Upload screen | Certificate View |
+|:---:|:---:|
+| ![Upload screen](docs/screenshots/upload.png) | ![Certificate view](docs/screenshots/certificate-view.png) |
+
+| Source File View | Color picker |
+|:---:|:---:|
+| ![Source file view](docs/screenshots/source-view.png) | ![Color picker](docs/screenshots/color-picker.png) |
+
+## 🚀 Getting Started
+
+### 📋 Requirements
+
+- Windows, with Python 3.9 or newer. The app relies on a few Windows-specific behaviors, such as taskbar icon handling and the settings folder location.
+- The packages listed in `requirements.txt`:
+
+| Package | What it does |
+|---|---|
+| **Pillow** | Loads images, renders styled text onto certificates, and exports PDF, PNG, and JPG |
+| **openpyxl** | Reads and writes `.xlsx` and `.xlsm` files. CSV needs nothing extra |
+| **tkinterdnd2** | Provides drag-and-drop. Optional at runtime |
+
+`tkinter` is not installed through pip. It comes with the standard python.org Windows installer.
+
+If `tkinterdnd2` is missing, Meraki still runs. It simply falls back to the Browse buttons instead of drag-and-drop.
+
+### ⬇️ Install
+
+```bash
+git clone https://github.com/mbilalkhan704/bulk-certificates-generator-ORIC-UOK.git
+cd bulk-certificates-generator-ORIC-UOK
 pip install -r requirements.txt
 ```
 
-`tkinter` is not in requirements.txt because it ships with standard Python
-installers on Windows and macOS. On some Linux distros you may need to
-install it separately, e.g. `sudo apt install python3-tk`.
+### ▶️ Run
 
-## 3. Add the Great Vibes backup font
-
-Create a `fonts` folder right next to `certificate_generator.py` and put
-your Great Vibes file in there, named exactly:
-
-```
-fonts/
-  GreatVibes-Regular.ttf
+```bash
+python mck_app.py
 ```
 
-This is **only a backup**. Great Vibes is fetched live from Google Fonts
-like any other font in the dropdown, the same way every other font is -
-this bundled copy just means the app still has a working default font
-even on a machine with no internet connection on first launch, or if
-Google Fonts is temporarily unreachable. If it's missing, the app simply
-tries to fetch Great Vibes live instead and works exactly the same in
-every other respect.
+`mck_app.py` is the entry point. Run that file, not any of the other `mck_*.py` modules on their own.
 
-## 4. Add the ORIC logo for the splash screen (optional)
+## 📖 How to Use Meraki
 
-Place a file named exactly `ORIC.png` right next to
-`certificate_generator.py`. It's shown on the animated splash screen the
-app displays for a few seconds on launch, before the main window appears.
-If it's missing, the splash screen still runs (animation and text only,
-no logo) - nothing breaks either way.
+The app also has a full walkthrough built in. Open **How to Use** from the top toolbar at any time. The short version:
 
-When bundling with PyInstaller, add it to the build with its own
-`--add-data` flag (see the bundling command below).
+1. **Load a source file.** Drop a CSV or Excel file on the upload screen, or click Browse, or pick one from your recent files. Each row should be one person.
+2. **Load a certificate template.** Use the Certificate View tab, drop an image onto it, or use the "Select from recent files" pill in the left panel.
+3. **Choose the name column.** Tell Meraki which column holds the names.
+4. **Place the name.** Drag it on the preview until it sits where you want, or type exact X and Y values.
+5. **Style it.** Set the font, size, color, alignment, styling, and casing. The preview updates as you change things.
+6. **Add a Certificate ID (optional).** Turn it on, then position and style it the same way as the name.
+7. **Pick your rows.** Use the Source File View tab to select everyone, a range, or a hand-picked set.
+8. **Generate.** Choose PDF, PNG, or JPG, pick the output folder, and start the run.
 
-## 5. Run it and test
+The Certificate View and Source File View tabs only appear once the data behind them exists, so you will not see an empty tab before you have loaded anything.
+
+## 🗂️ Working with Rows
+
+The Source File View tab shows your data in a grid, and it controls exactly which rows are processed.
+
+| Mode | How it works |
+|---|---|
+| **All rows** | Every row in the file gets a certificate. |
+| **Custom ranges** | Type a range such as `1-25`, or select rows directly in the grid. |
+| **Shift-click** | Select a continuous block of rows. |
+| **Ctrl-click** | Add or remove single rows from the selection. |
+| **Range chips** | Lock a range in place as a chip. You can then build a second or third range without the new clicks undoing the earlier ones. |
+
+Green and red row highlighting in the grid shows which rows are part of the run, so you can check the selection before you generate anything.
+
+## 🔖 Certificate IDs
+
+Turn on Certificate IDs and Meraki assigns each person a unique ID that is drawn onto their certificate.
+
+The IDs are saved back into your source file. That matters when you run the same file again later: an ID that has already been given out is never reassigned. If you generate certificates in several batches over a few weeks, each person keeps the same ID.
+
+Because this writes to your file, keep a copy of the original if you need one.
+
+## 🔤 Fonts and Text Styling
+
+### 🔠 Font picker
+
+The Name and Certificate ID each have their own font box. It works like the font box in a word processor: start typing and the list filters live. Click the box once to select all of its text, click again to edit. Scrolling the mouse wheel over the box scrolls the left panel instead of cycling through fonts, so you will not change your font by accident.
+
+### 🔑 Google Fonts and the API key
+
+Meraki can pull fonts from Google Fonts, and it ships with a bundled default so it works offline. Every install starts with only that default font available. To unlock the full library:
+
+1. Get a free Google Fonts API key from Google.
+2. Enter it in the first-run prompt, or later through **Settings** (the gear icon).
+3. Meraki checks the key with Google before saving it. A key that Google rejects is not saved.
+
+There is no key bundled with the app, so each person or machine needs its own. If you skip the prompt, you can add a key at any time.
+
+### 🅱️ Bold, Italic, and Underline
+
+These work with any font, including fonts that have no bold or italic file of their own. Bold is simulated with a text outline, italic with a slant transform, and underline with a drawn line. They can be combined.
+
+### 🔡 Casing
+
+| Option | Example result for "muhammad bilal khan" |
+|---|---|
+| As in file | muhammad bilal khan |
+| UPPERCASE | MUHAMMAD BILAL KHAN |
+| lowercase | muhammad bilal khan |
+| Title Case | Muhammad Bilal Khan |
+| Sentence case | Muhammad bilal khan |
+| tOGGLE cASE | mUHAMMAD bILAL kHAN |
+
+Casing is applied at render time only. Your spreadsheet is left exactly as it was.
+
+### 🖌️ Color picker
+
+The color picker opens with a grid of standard colors, a shaded palette, and your recently used colors. **More colors** opens an HSV spectrum with hex and RGB entry. Recent colors are saved between sessions.
+
+## 🎨 Themes
+
+Meraki ships with twelve themes, and you can switch between them from Settings. Each one has its own palette, and dialogs follow the active theme so nothing looks out of place when a window opens.
+
+| Theme | Feel | Main accent |
+|---|---|---|
+| **Light** | Clean indigo on white | Indigo, with a coral secondary |
+| **Dark** | Charcoal with soft violet | Periwinkle |
+| **Midnight** | Deep navy | Bright blue |
+| **Ocean** | Fresh teal and aqua | Teal, with an amber secondary |
+| **Arctic** | Cool, muted blue-green | Glacier blue |
+| **Sunset** | Warm terracotta | Coral |
+| **Forest** | Calm woodland green | Pine green |
+| **Emerald** | Brighter, jewel-toned green | Emerald |
+| **Lavender** | Soft purple with a rosy secondary | Lilac |
+| **Amethyst** | Deeper, richer purple | Amethyst |
+| **Rose** | Dusty pink | Rose |
+| **Coffee** | Warm browns on cream | Espresso brown |
+
+Light, Ocean, Arctic, Sunset, Forest, Emerald, Lavender, Amethyst, Rose, and Coffee are light themes. Dark and Midnight are the two dark ones, with their own row and text colors tuned for readability.
+
+The splash screen keeps a fixed dark background regardless of theme, since it is branding rather than app interface.
+
+### ➕ Adding your own theme
+
+Themes live in `mck_themes.py` as a single `THEMES` dictionary. To add one, copy an existing entry and give it a new name. Every theme defines the same set of keys:
+
+| Group | Keys |
+|---|---|
+| Surfaces | `bg`, `panel_bg`, `canvas_bg`, `entry_bg`, `dialog_bg` |
+| Toolbar | `toolbar_bg`, `toolbar_fg`, `toolbar_sub` |
+| Accents | `accent`, `accent_active`, `accent2`, `accent2_active` |
+| Tabs | `tab_inactive_bg`, `tab_border` |
+| Text and borders | `text`, `subtle_text`, `border` |
+| Validation | `invalid_bg`, `invalid_border` |
+
+Leave none of them out. If a key is missing, parts of the interface will have nothing to draw with.
+
+## 📐 How Positioning Works
+
+- X and Y are pixel coordinates on the **original, full-resolution** certificate image, not on the shrunken preview. Meraki converts between the two automatically, so a spot you choose by dragging on the preview lands in the same place in the final file.
+- Vertical placement is centered on the Y value you set.
+- Horizontal alignment (left, center, or right) is set with the alignment controls, which is the usual way name-plate certificates are laid out.
+- Any image size works. The app was tuned for certificates around 2000 x 1414 px, and it will warn you if the proportions look unusual.
+
+## 📦 Output Files
+
+Certificates are saved as PDF, PNG, or JPG, one file per selected row. Each file is named after the person: words are capitalized and joined with underscores.
+
+| Name in the file | Output file name |
+|---|---|
+| `bilal` | `Bilal.pdf` |
+| `Muhammad bilal khan` | `Muhammad_Bilal_Khan.pdf` |
+
+If two rows would produce the same file name, later ones get `_1`, `_2`, and so on, so nothing is overwritten.
+
+Nothing is ever drawn onto a certificate except what you set up: the name, the optional Certificate ID, and your template's own design.
+
+## ⚙️ Settings and Data Storage
+
+Settings live here:
 
 ```
-python certificate_generator.py
+%LOCALAPPDATA%\Meraki\settings.json
 ```
 
-Try uploading a sample CSV or Excel file, a certificate image, dragging
-the name around, toggling Bold/Italic/Underline, switching themes from
-Settings, and generating a batch, before you bundle anything.
+This file holds your theme, your Google Fonts API key, and your recent files, images, and colors. It is a per-user folder, so it works no matter where the app itself is installed. If you used an earlier version, note that the folder was previously named `ORICCertificateGenerator`.
 
-## 6. Bundle into a single .exe
+Apart from that file, Meraki writes only to the output folder you choose and, when Certificate IDs are on, back into your source file.
 
-```
-pip install pyinstaller
+## 🛠️ Building the Executable
 
-# Windows (note the semicolon):
-pyinstaller --onefile --windowed --name CertificateGenerator --add-data "fonts;fonts" --add-data "ORIC.png;." certificate_generator.py
+Meraki is packaged with PyInstaller, pointed at `mck_app.py`. This is the command for the Windows command prompt (`^` continues a line):
 
-# macOS / Linux (note the colon):
-pyinstaller --onefile --windowed --name CertificateGenerator --add-data "fonts:fonts" --add-data "ORIC.png:." certificate_generator.py
-```
-
-- `--onefile` produces a single executable - this is the one file you hand
-  to a client.
-- `--windowed` stops a console window from popping up alongside the GUI.
-- `--add-data "fonts;fonts"` bundles the Great Vibes backup file inside the
-  exe.
-- `--add-data "ORIC.png;."` bundles the splash screen logo. Skip this flag
-  if you didn't add an `ORIC.png` - the splash screen works fine without
-  it, just without a logo.
-- Add `--icon=youricon.ico` if you want a custom taskbar icon.
-
-The finished executable will be in `dist/CertificateGenerator.exe`. It is
-fully self-contained - the person running it doesn't need Python, Pillow,
-or any fonts installed on their machine.
-
-## Splash screen
-
-On launch, the app shows a brief animated splash screen (a colorful
-Lissajous-curve trace with orbiting dots, on a fixed dark background) with
-the ORIC logo and a small tagline - independent of whichever in-app theme
-is selected, since it's identity/branding rather than app UI. It runs for
-its full duration every time and cannot be skipped or clicked past - this
-is deliberate, so it reads as the app actually loading rather than a
-dismissible ad. The main window stays hidden until it finishes, then opens
-maximized.
-
-## Settings: API key & theme (top-right "Settings" button)
-
-Clicking **Settings** in the toolbar opens a small dialog with two things:
-
-- **Google Fonts API key** - blank until someone enters one. Saved
-  automatically to a per-user settings file (see below) so it's
-  remembered across launches - they only ever enter it once, unless they
-  want to change it later.
-- **Theme** - Light, Dark, Ocean, or Sunset. Changes apply live as you
-  pick one in the dropdown, so you can preview before deciding.
-
-Both **Save** and **Cancel** are available: Save persists your changes;
-Cancel reverts the API key field and the theme back to whatever was active
-before you opened the dialog.
-
-There's also a dedicated reminder dialog (separate from Settings) that
-appears automatically right after the splash screen finishes, but only
-when no key is on file yet - see "There is no bundled API key" near the
-top of this file.
-
-Settings are stored in:
-
-```
-%LOCALAPPDATA%\ORICCertificateGenerator\settings.json
+```bash
+pyinstaller --onefile --windowed --icon=icons/app_icon.ico ^
+    --add-data "icons;icons" --add-data "fonts;fonts" ^
+    --collect-data tkinterdnd2 ^
+    mck_app.py
 ```
 
-This is a per-Windows-user folder, independent of where the .exe itself is
-installed - it works whether the exe sits on the Desktop, in Documents, or
-anywhere else the user's account can normally write to. (Installing the
-exe itself into `C:\Program Files\` is fine; just don't expect the app to
-also be able to write files *into* that folder - it doesn't need to,
-since settings live under LocalAppData instead.)
+| Flag | Purpose |
+|---|---|
+| `--onefile` | Produces a single `.exe` you can hand to someone else |
+| `--windowed` | Stops a console window from opening next to the app |
+| `--icon` | Sets the app and taskbar icon |
+| `--add-data "icons;icons"` | Bundles the icons folder |
+| `--add-data "fonts;fonts"` | Bundles the offline default font |
+| `--collect-data tkinterdnd2` | Bundles the drag-and-drop Tcl extension |
 
-## Fonts: one searchable Google Fonts dropdown
+> [!IMPORTANT]
+> Do not drop `--collect-data tkinterdnd2`. That package ships a small Tcl extension as data files, not just code. Without the flag, drag-and-drop can quietly stop working in the packaged `.exe` even though it worked fine under plain `python`.
 
-There's a single font picker (Section 4, "Font & style"). Type in the
-Search box to filter, then pick from the dropdown - it fetches that font
-live the first time you select it (a small spinner shows while it's
-downloading) and reuses it instantly for the rest of the session after
-that. Nothing is written to disk; fonts are held in memory only.
+The finished executable appears in `dist/`. The person running it does not need Python, Pillow, or any fonts installed.
 
-- **Without an API key**, the dropdown only offers **Great Vibes** - that's
-  the one font guaranteed to work with zero setup (see "Add the Great
-  Vibes backup font" below for how its offline fallback works).
-- **With a working API key**, the dropdown switches to the full official
-  Google Fonts library - 1,800+ fonts, searchable.
-- The reminder dialog described in "There is no bundled API key" above is
-  how most people will end up adding a key; the same can also be done
-  anytime from Settings.
+## 🧩 Project Structure
 
-## Bold / Italic / Underline
+Meraki is split into focused modules grouped by feature, each kept under roughly 600 lines. This replaced a single script of about 4,500 lines.
 
-Simple B / I / U checkboxes sit right under the font picker. These work
-with **any** font, including ones with no actual bold or italic file of
-their own - bold is simulated with a text outline/stroke, italic with a
-slant transform, and underline with a drawn line. All three can be
-combined, and they update the live preview immediately. These are
-custom-drawn toggle boxes (not the OS's native checkbox widget), so they
-render identically across machines and always follow the selected theme.
+```
+.
+├── mck_app.py              Entry point, assembles the app
+├── mck_constants.py        Paths, settings location, palette data
+├── mck_themes.py           The THEMES dictionary (all twelve color themes)
+├── mck_utils.py            Helpers: fonts networking, CSV/Excel I/O, text rendering, color math
+├── mck_dnd.py              Drag-and-drop setup and the app's base class
+├── mck_core.py             Init, splash screen, settings, recents, exit confirmation, dialog attention
+├── mck_font_picker.py      Word-style font autocomplete (Name and Certificate ID)
+├── mck_dialogs.py          Dialog icons, Settings, first-run API key prompt, theme application
+├── mck_build_ui.py         Main window: toolbar, left panel, tabs
+├── mck_upload_screen.py    Upload Source File screen and tab switching
+├── mck_source_view.py      CSV/Excel grid and row selection
+├── mck_widgets_certid.py   Reusable widget builders and Certificate ID logic
+├── mck_cert_image.py       Loading source files and certificate images
+├── mck_color_picker.py     Advanced color picker dialog
+├── mck_generation.py       Live preview canvas and the bulk generation run
+├── requirements.txt
+├── icons/
+└── fonts/
+```
 
-## Live color picker
+## 🏗️ Architecture Notes
 
-Clicking "Choose..." next to Color opens a small dialog with R/G/B sliders
-and a hex box. The color applies live to both the dialog's own preview and
-the main certificate preview as you drag - no need to click OK to see it.
-Click **Cancel** (or close the dialog) to revert to whatever color you had
-before opening it; click **OK** to keep the new color.
+Each module holds a mixin class. `mck_app.py` combines them through multiple inheritance into a single `CertificateApp` class, which is the thing that actually runs.
 
-## Data file: CSV or Excel
+A few things worth knowing before you edit:
 
-Section 1 accepts either a `.csv` file or an `.xlsx`/`.xlsm` Excel file.
-Excel reading uses the `openpyxl` package (already in requirements.txt) -
-it reads the first (active) sheet, treats row 1 as the column headers, and
-skips any fully blank rows. Everything downstream (the name-column
-dropdown, generation, filenames) works the same regardless of which
-format you uploaded.
+- No mixin overrides another mixin's methods, so the order of the mixins does not matter, with one exception.
+- `CoreMixin` defines `__init__`, so it **must** come before the Tk base class in the inheritance list. There is a comment in `mck_app.py` explaining this. Please read it before reordering anything.
+- If you add a feature, put it in the module that matches its area, or start a new module if it does not fit anywhere. That is how the codebase stays out of monolith territory.
 
-## Notes on how positioning works
+## 🩺 Troubleshooting
 
-- X/Y are pixel coordinates on the *original, full-resolution* certificate
-  image, not the shrunk-down preview. The app converts between the two
-  automatically, so a position you set by dragging on the preview lines up
-  exactly with the final output.
-- The app was built assuming certificates around 2000x1414px (a common
-  export size), but it works with any image size - it just warns you if
-  the proportions look unusual.
-- Vertical placement is always centered on the Y value you set; horizontal
-  alignment (left/center/right) is controlled by the alignment radio
-  buttons, which is the standard way name-plate certificates are laid out.
+**Drag-and-drop does nothing.**
+Check that `tkinterdnd2` is installed. If you are running the built `.exe`, confirm it was built with `--collect-data tkinterdnd2`. Browse buttons work either way.
 
-## Output files
+**Only one font shows up in the font list.**
+That is the expected state without a Google Fonts API key. Add one in Settings to unlock the full library. If Google rejected your key, Meraki will say so and will not save it.
 
-Certificates are saved into a `certificates` subfolder created inside
-whatever output directory you choose - e.g. if you pick `C:\Output`, files
-land in `C:\Output\certificates\`. Use the "Save as" dropdown to choose
-PDF, PNG, or JPG.
+**A key I just typed was not accepted.**
+Meraki validates the key with a live request to Google. Check your internet connection, make sure the key has access to the Google Fonts API, and try again.
 
-Each filename is built from the row's name: every word is capitalized and
-words are joined with underscores. For example:
+**The main window does not respond while a dialog is open.**
+That is intentional. Dialogs are modal, so the main window is blocked until you close them. Meraki flashes, shakes, or plays a sound on the dialog to point you back to it.
 
-- `bilal` → `Bilal.pdf` (or `.png` / `.jpg`, depending on your choice)
-- `Muhammad bilal khan` → `Muhammad_Bilal_Khan.pdf`
+**Certificates look slightly off from the preview.**
+Positions are stored against the full-resolution image, so the output should match the preview. If it does not, check that you loaded the intended template and that the alignment setting is what you expect.
 
-If two rows produce the same filename, later ones get `_1`, `_2`, etc.
-appended so nothing gets overwritten.
+**Settings seem to have reset.**
+Settings moved from `ORICCertificateGenerator` to `Meraki` in `%LOCALAPPDATA%`. Values from the old folder are not read automatically, so re-enter your API key if needed.
 
-## The window opens maximized
+## 💬 Support
 
-The app opens filling the screen automatically on launch (right after the
-splash screen closes). The whole left panel (all 5 numbered sections)
-scrolls independently of the preview on the right, so it stays usable even
-on smaller screens or if more options get added later - scroll with the
-mouse wheel or the scrollbar while hovering over the left panel.
+Use the **Help** button in the app to report an issue, and **How to Use** for a walkthrough of every feature.
 
-## Credit footer
+## 💜 Credits
 
-A small "Developed by Muhammad Bilal Khan for ORIC, UoK" note sits in the
-bottom-right corner of the app window itself. This is purely part of the
-app's UI chrome - it is never drawn onto certificate images, and never
-appears in generated PDF/PNG/JPG output. Certificates only ever contain
-what you explicitly put on them: the name and (optionally) your
-certificate template's own design.
+Developed by **Muhammad Bilal Khan** for ORIC, University of Karachi.
