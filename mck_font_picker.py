@@ -6,6 +6,7 @@ import os
 import io
 import threading
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 from PIL import ImageFont # type: ignore
 
@@ -61,6 +62,54 @@ class FontPickerMixin:
         if not getattr(self, "_font_popup_global_click_bound", False):
             self.bind_all("<Button-1>", self._maybe_hide_all_font_popups, add="+")
             self._font_popup_global_click_bound = True
+
+    def _close_native_popdowns(self):
+        """Close any open ttk.Combobox dropdown list (the arrow-button one)."""
+        def walk(widget):
+            for child in widget.winfo_children():
+                if isinstance(child, ttk.Combobox):
+                    popdown = f"{child}.popdown"
+                    try:
+                        if (self.tk.call("winfo", "exists", popdown)
+                                and self.tk.call("winfo", "ismapped", popdown)):
+                            self.tk.call("ttk::combobox::Unpost", str(child))
+                    except tk.TclError:
+                        pass
+                walk(child)
+        walk(self)
+
+    def _is_popup_open(self, key):
+        popup = self._font_pickers[key].get("popup")
+        return (popup is not None and popup.winfo_exists()
+                and str(popup.state()) != "withdrawn")
+
+    def _popup_under_pointer(self):
+        """Key of the open custom popup the pointer is over, else None."""
+        px, py = self.winfo_pointerxy()
+        for key, picker in self._font_pickers.items():
+            if not self._is_popup_open(key):
+                continue
+            popup = picker["popup"]
+            x, y = popup.winfo_rootx(), popup.winfo_rooty()
+            if x <= px < x + popup.winfo_width() and y <= py < y + popup.winfo_height():
+                return key
+        return None
+
+    def _hide_all_font_popups(self):
+        for key in self._font_pickers:
+            self._hide_font_popup(key, reclaim_focus=False)
+
+    def _scroll_popup_list(self, key, event):
+        listbox = self._font_pickers[key].get("popup_listbox")
+        if listbox is None:
+            return
+        if getattr(event, "num", None) == 4:
+            direction = -1
+        elif getattr(event, "num", None) == 5:
+            direction = 1
+        else:
+            direction = -1 if event.delta > 0 else 1
+        listbox.yview_scroll(direction * 3, "units")
 
     def _forward_wheel_to_left_panel(self, event):
         self._on_left_panel_mousewheel(event)

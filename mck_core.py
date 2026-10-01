@@ -867,6 +867,27 @@ class CoreMixin:
         the color-spectrum flyout, etc.) can never leave it stuck off.
         Scrolls whenever the pointer is geometrically over the panel,
         regardless of which specific child widget is directly under it."""
+        # 1. Native ttk dropdown (arrow button): its own Listbox already
+        #    scrolled itself, so the panel must not move.
+        if "popdown" in str(event.widget):
+            return
+
+        # 2. Pointer over our custom popup: scroll that list, never the panel.
+        key = self._popup_under_pointer()
+        if key is not None:
+            listbox = self._font_pickers[key]["popup_listbox"]
+            # If the event targeted the listbox itself, its class binding
+            # already scrolled it; scrolling again would double the speed.
+            # If it targeted the combo (focus), scroll the list ourselves.
+            if event.widget is not listbox:
+                self._scroll_popup_list(key, event)
+            return "break"
+
+        # 3. A real panel scroll: close any open popup so it can't be
+        #    left floating in the old position, then scroll the panel.
+        self._hide_all_font_popups()
+        self._close_native_popdowns()
+
         lc = getattr(self, "left_canvas", None)
         if lc is None or not lc.winfo_exists():
             return
