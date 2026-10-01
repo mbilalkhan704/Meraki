@@ -49,7 +49,7 @@ class CoreMixin:
         # on screen for a tick before we hide it. Withdrawing first, then
         # doing the rest of setup while still hidden, is the standard fix.
         self.withdraw()
-        self.title("Meraki - Bulk Certificate Generator")
+        self.title("Meraki - Where Data Becomes Recognition.")
         
         # Load window icon
         if os.path.isfile(APP_ICON_ICO) and sys.platform.startswith("win"):

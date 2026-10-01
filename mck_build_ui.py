@@ -68,7 +68,7 @@ class BuildUiMixin:
         # Subtitle label
         self.sub_label = tk.Label(
             self.title_frame,
-            text=" │ BULK CERTIFICATE GENERATOR",
+            text=" │ Where Data Becomes Recognition.",
             bg=theme["toolbar_bg"],
             fg=theme.get("toolbar_sub", theme["toolbar_fg"]),
             font=("Segoe UI Semibold", 10)
