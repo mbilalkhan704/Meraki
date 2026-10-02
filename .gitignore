@@ -1,2 +1,11 @@
-*.exe
+
 __pycache__/
+*.pyc
+build/
+dist/
+*.spec
+settings.json
+certificates/
+Meraki/
+*.exe
+installer/
