@@ -3,6 +3,7 @@ dialog, the first-run API key prompt, and the master theme-application
 routine that styles every ttk widget in the app."""
 
 import sys
+import os
 import math
 import threading
 import webbrowser
@@ -12,8 +13,9 @@ from tkinter import ttk
 from PIL import Image, ImageDraw, ImageTk
 
 from mck_constants import (
-    THEMES, 
-    DEFAULT_THEME
+    THEMES,DEFAULT_THEME,
+    APP_NAME, APP_SUBTITLE, APP_VERSION, LICENSE_NAME, COPYRIGHT_TEXT, APP_CREDIT_TEXT,
+    GITHUB_REPO_URL, APP_ICON_PNG, ORIC_LOGO_FILE,
 )
 
 from mck_utils import validate_google_fonts_api_key
@@ -517,6 +519,89 @@ class DialogsMixin:
         if hasattr(self, "recent_files_frame"):
             self._refresh_recent_files_list()
 
+    # PASTE THESE METHODS INSIDE class DialogsMixin in mck_dialogs.py (same indentation as the other methods).
+    # Needs: import os  +  the constants listed in the answer (APP_NAME, APP_SUBTITLE, APP_VERSION, LICENSE_NAME,
+    #        COPYRIGHT_TEXT, APP_CREDIT_TEXT, GITHUB_REPO_URL, APP_ICON_PNG, ORIC_LOGO_FILE).
+
+    # ------------------------------------------------------------------
+    # Help menu + About dialog
+    # ------------------------------------------------------------------
+    def _build_help_menu(self):
+        menu = tk.Menu(self, tearoff=0)
+        menu.add_command(label=f"About {APP_NAME}...", command=self._open_about_dialog)
+        menu.add_command(label="View source code on GitHub", command=self._open_repo)
+        menu.add_command(label="Report an issue", command=self._open_github_issues)
+        self._help_menu = menu
+
+    def _show_help_menu(self):
+        btn = self.issues_btn
+        try:
+            self._help_menu.tk_popup(btn.winfo_rootx(), btn.winfo_rooty() + btn.winfo_height())
+        finally:
+            self._help_menu.grab_release()
+
+    def _open_repo(self, _event=None):
+        webbrowser.open_new_tab(GITHUB_REPO_URL)
+
+    def _about_logo(self, path, size):
+        if not os.path.isfile(path):
+            return None
+        try:
+            img = Image.open(path).convert("RGBA")
+            img.thumbnail((size, size), Image.LANCZOS)
+            return ImageTk.PhotoImage(img)
+        except Exception:
+            return None
+
+    def _open_about_dialog(self):
+        theme = self._current_theme_colors
+        dialog = tk.Toplevel(self)
+        dialog.withdraw()                      # stay hidden until built + positioned (no flash)
+        dialog.title(f"About {APP_NAME}")
+        dialog.configure(bg=theme["dialog_bg"])
+        dialog.resizable(False, False)
+        dialog.transient(self)
+        self._register_modal_dialog(dialog)
+
+        frm = ttk.Frame(dialog, padding=22, style="Dialog.TFrame")
+        frm.pack(fill="both", expand=True)
+
+        head = ttk.Frame(frm, style="Dialog.TFrame")
+        head.pack(fill="x")
+        self._about_logos = [self._about_logo(APP_ICON_PNG, 72)]
+        if self._about_logos[0]:
+            ttk.Label(head, image=self._about_logos[0], style="Dialog.TLabel").pack(side="left", padx=(0, 16))
+        titles = ttk.Frame(head, style="Dialog.TFrame")
+        titles.pack(side="left")
+        ttk.Label(titles, text=APP_NAME, font=("Segoe UI", 18, "bold"), style="Dialog.TLabel").pack(anchor="w")
+        ttk.Label(titles, text=APP_SUBTITLE, style="DialogSubtle.TLabel").pack(anchor="w")
+        ttk.Label(titles, text=f"Version {APP_VERSION}", style="DialogSubtle.TLabel").pack(anchor="w")
+
+        ttk.Separator(frm).pack(fill="x", pady=14)
+        ttk.Label(frm, text=APP_CREDIT_TEXT, style="Dialog.TLabel").pack(anchor="w")
+        ttk.Label(frm, text=f"{COPYRIGHT_TEXT}  \u00b7  Released under the {LICENSE_NAME}",
+                style="DialogSubtle.TLabel").pack(anchor="w", pady=(2, 0))
+        ttk.Label(frm, style="DialogSubtle.TLabel", wraplength=380, justify="left",
+                text="Built with Python, Tkinter and Pillow. Fonts via Google Fonts.").pack(anchor="w", pady=(8, 14))
+
+        for text, action in (("View source code on GitHub \u2192", self._open_repo),
+                            ("Report an issue \u2192", self._open_github_issues)):
+            link = ttk.Label(frm, text=text, foreground=theme["accent"], font=("Segoe UI", 10, "underline"),
+                            style="Dialog.TLabel", cursor="hand2")
+            link.pack(anchor="w", pady=2)
+            link.bind("<Button-1>", lambda e, a=action: a())
+        ttk.Label(frm, text=GITHUB_REPO_URL, style="DialogSubtle.TLabel").pack(anchor="w", pady=(6, 0))
+
+        ttk.Button(frm, text="Close", command=dialog.destroy).pack(anchor="e", pady=(16, 0))
+        dialog.bind("<Escape>", lambda e: dialog.destroy())
+
+        dialog.update_idletasks()               # measure while hidden, then show already centred
+        w, h = dialog.winfo_reqwidth(), dialog.winfo_reqheight()
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        dialog.geometry(f"+{(sw - w) // 2}+{(sh - h) // 3}")
+        dialog.deiconify()
+        dialog.wait_visibility()
+        dialog.grab_set()
     # ------------------------------------------------------------------
     # UI construction
     # ------------------------------------------------------------------
