@@ -16,6 +16,8 @@ from tkinter import ttk
 from PIL import Image, ImageDraw, ImageTk
 
 from mck_constants import (
+    APP_NAME,
+    APP_SUBTITLE,
     SETTINGS_PATH, 
     DEFAULT_FONT_FAMILY,
     ORIC_LOGO_FILE, 
@@ -49,7 +51,7 @@ class CoreMixin:
         # on screen for a tick before we hide it. Withdrawing first, then
         # doing the rest of setup while still hidden, is the standard fix.
         self.withdraw()
-        self.title("Meraki - Where Data Becomes Recognition.")
+        self.title(f"{APP_NAME} - {APP_SUBTITLE}")
         
         # Load window icon
         if os.path.isfile(APP_ICON_ICO) and sys.platform.startswith("win"):
