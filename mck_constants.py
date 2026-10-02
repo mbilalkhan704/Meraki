@@ -60,7 +60,13 @@ _LEGACY_USER_AGENT = ("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 "
 
 GOOGLE_FONTS_API_URL = "https://www.googleapis.com/webfonts/v1/webfonts"
 
-GITHUB_ISSUES_URL = "https://github.com/mbilalkhan704/Meraki/issues"
+GITHUB_REPO_URL = "https://github.com/mbilalkhan704/Meraki"
+GITHUB_ISSUES_URL = GITHUB_REPO_URL + "/issues"   # same name, so mck_core keeps working
+APP_NAME = "Meraki"
+APP_SUBTITLE = "Where Data Becomes Recognition."
+APP_VERSION = "1.0.0"
+LICENSE_NAME = "MIT License"        # set this to Meraki's real licence
+COPYRIGHT_TEXT = "\u00a9 2026 Muhammad Bilal Khan"
 
 APP_CREDIT_TEXT = "Developed by Muhammad Bilal Khan for ORIC, UoK"
 
