@@ -12,6 +12,7 @@ from PIL import Image, ImageTk # type: ignore
 
 from mck_constants import (
     APP_ICON_PNG,
+    APP_SUBTITLE,
     APP_CREDIT_TEXT,
     CERT_ID_MIN_LENGTH,
     CERT_ID_MAX_LENGTH
@@ -68,7 +69,7 @@ class BuildUiMixin:
         # Subtitle label
         self.sub_label = tk.Label(
             self.title_frame,
-            text=" │ Where Data Becomes Recognition.",
+            text=f" │ {APP_SUBTITLE}",
             bg=theme["toolbar_bg"],
             fg=theme.get("toolbar_sub", theme["toolbar_fg"]),
             font=("Segoe UI Semibold", 10)
@@ -87,13 +88,14 @@ class BuildUiMixin:
         # 2. Issues Button (packed next to Settings)
         self.issues_btn = tk.Button(
             self.toolbar, 
-            text="\u2753 Help", 
+            text="\u2753 Help \u25be", 
             relief="flat",
             bd=0, padx=14, pady=6, cursor="hand2",
             font=("Segoe UI", 10, "bold"),
-            command=self._open_github_issues
+            command=self._show_help_menu
         )
         self.issues_btn.pack(side="right", padx=(0, 4), pady=10)
+        self._build_help_menu()
 
         # 3. How to Use Button (packed next to Help)
         self.how_to_use_btn = tk.Button(
@@ -118,6 +120,12 @@ class BuildUiMixin:
             font=("Segoe UI", 12, "italic")
         )
         self.footer_note.pack(side="right", padx=14, pady=4)
+        self.footer_note.configure(cursor="hand2")
+        self.footer_note.bind("<Button-1>", self._open_repo)
+        self.footer_note.bind("<Enter>", lambda e: self.footer_note.configure(
+            fg=self._current_theme_colors["accent"], font=("Segoe UI", 12, "italic underline")))
+        self.footer_note.bind("<Leave>", lambda e: self.footer_note.configure(
+            fg=self._current_theme_colors["subtle_text"], font=("Segoe UI", 12, "italic")))
 
         self.main_root_frame = ttk.Frame(self, padding=10)
         root = self.main_root_frame
